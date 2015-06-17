@@ -4,6 +4,7 @@
 module Main where
 
 import           Control.Monad.IO.Class (liftIO)
+import qualified Data.IntMap.Strict                     as Map
 import qualified Data.Text                              as T
 import           System.Console.Haskeline
 import qualified Text.Parsec                            as P
@@ -15,11 +16,42 @@ data Inst = Abs Int [Inst]
           | App Int Int
           deriving (Eq, Show)
 
-data Prog = Prog [Inst]
+data Prog = Prog {
+                body :: [Inst]
+            }
+            deriving (Eq, Show)
+
+data Value = Fn
+           | Succ
+           | In
+           | Out
+           deriving (Eq, Show)
+
+type Code = [Inst]
+type Environment = Map.IntMap Value
+type Dump = [(Code, Environment)]
+
+data Machine = Machine Code Environment Dump
 
 
-eval :: Prog -> IO ()
-eval = undefined
+
+
+initialEnv :: Environment
+initialEnv = Map.fromList [(1, In), (2, Out), (3, Succ)]
+
+
+initialDump :: Dump
+initialDump = [([], Map.empty), ([App 1 1], Map.empty)]
+
+
+start :: Prog -> IO ()
+start prog = do
+  let machine = Machine (body prog) initialEnv initialDump
+  eval machine
+
+
+eval :: Machine -> IO ()
+eval machine = undefined
 
 
 absParser :: Stream s m Char => ParsecT s u m Inst
@@ -71,5 +103,5 @@ main = runInputT defaultSettings loop
           outputStrLn $ "Input was: " ++ input
           case (P.parse programParser "" input) of
             Left err -> liftIO $ print err
-            Right xs -> liftIO $ putStrLn "Hello Word"
+            Right prog -> liftIO $ start prog
           loop
