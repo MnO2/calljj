@@ -25,8 +25,8 @@ eval = undefined
 absParser :: Stream s m Char => ParsecT s u m Inst
 absParser = do { arity_seq <- aritySeqParser
                ; let arity = length arity_seq
-               ; P.count arity appParser
-               ; return $ Abs arity []
+               ; insts <- P.count arity appParser
+               ; return $ Abs arity insts
                }
   where
     aritySeqParser :: Stream s m Char => ParsecT s u m [Char]
