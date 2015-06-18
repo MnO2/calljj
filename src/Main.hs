@@ -7,6 +7,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.State.Strict (StateT)
 import qualified Control.Monad.Trans.State.Strict       as S
 import qualified Data.IntMap.Strict                     as Map
+import           Data.Maybe (fromJust)
 import qualified Data.Text                              as T
 import           System.Console.Haskeline
 import qualified Text.Parsec                            as P
@@ -24,7 +25,7 @@ data Prog = Prog
             }
             deriving (Eq, Show)
 
-data Value = Fn
+data Value = Fn Code Environment
            | Succ
            | In
            | Out
@@ -61,7 +62,21 @@ start prog = do
 
 
 evalInst :: Inst -> SECD () 
-evalInst = undefined
+evalInst (App m n) = do { machine <- S.get
+                        ; let env = environment machine
+                        ; let top = Map.size env
+                        ; let f = fromJust $ Map.lookup (top-m+1) env
+                        ; let v = fromJust $ Map.lookup (top-n+1) env
+                        ; case f of
+                              Fn fn_code fn_env ->  do
+                                                      let dump' = (((code machine, environment machine)):(dump machine))
+                                                      let fn_env' = Map.insert (top+1) v fn_env
+                                                      let machine' = Machine fn_code fn_env' dump'
+                                                      S.put machine'
+                              _ -> return ()
+                        ; return ()
+                        }
+evalInst (Abs arity insts) = undefined
 
 
 eval :: SECD ()
