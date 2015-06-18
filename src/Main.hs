@@ -76,7 +76,14 @@ evalInst (App m n) = do { machine <- S.get
                               _ -> return ()
                         ; return ()
                         }
-evalInst (Abs arity insts) = undefined
+evalInst (Abs arity insts) = do { machine <- S.get 
+                                ; let env = environment machine
+                                ; let f = Fn insts env
+                                ; let top = Map.size env
+                                ; let env' = Map.insert (top+1) f env
+                                ; let machine' = Machine (code machine) env' (dump machine)
+                                ; S.put machine'
+                                }
 
 
 eval :: SECD ()
