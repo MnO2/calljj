@@ -101,12 +101,18 @@ eval = do
     evalInst inst
     eval
   else do
-    let code' = fst $ head (dump machine)
-    let env' = snd $ head (dump machine)
-    let dump' = tail (dump machine)
-    let machine' = Machine code' env' dump'
-    S.put machine'
-    eval
+    if (null (dump machine))
+    then return ()
+    else do
+      let env = environment machine
+      let ret = fromJust $ Map.lookup (Map.size env) env
+      let code' = fst $ head (dump machine)
+      let env' = snd $ head (dump machine)
+      let env'' = Map.insert ((Map.size env')+1) ret env'
+      let dump' = tail (dump machine)
+      let machine' = Machine code' env'' dump'
+      S.put machine'
+      eval
 
 
 
