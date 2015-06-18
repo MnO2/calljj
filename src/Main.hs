@@ -6,6 +6,7 @@ module Main where
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.State.Strict (StateT)
 import qualified Control.Monad.Trans.State.Strict       as S
+import           Data.Char (ord, chr)
 import qualified Data.IntMap.Strict                     as Map
 import           Data.Maybe (fromJust)
 import qualified Data.Text                              as T
@@ -26,6 +27,7 @@ data Prog = Prog
             deriving (Eq, Show)
 
 data Value = Fn Code Environment
+           | CharFn Char
            | Succ
            | In
            | Out
@@ -73,6 +75,26 @@ evalInst (App m n) = do { machine <- S.get
                                                       let fn_env' = Map.insert (top+1) v fn_env
                                                       let machine' = Machine fn_code fn_env' dump'
                                                       S.put machine'
+                              In -> do
+                                     c <- liftIO $ getChar
+                                     let env' = Map.insert (top+1) (CharFn c) env
+                                     let machine' = Machine (code machine) env' (dump machine)
+                                     S.put machine'
+                              Out -> do
+                                       case v of
+                                         CharFn cc -> do
+                                                       liftIO $ putChar cc
+                                                       let env' = Map.insert (top+1) v env
+                                                       let machine' = Machine (code machine) env' (dump machine)
+                                                       S.put machine'
+                                         _ -> return ()
+                              Succ -> do
+                                       case v of
+                                         CharFn cc -> do
+                                                       let env' = Map.insert (top+1) (CharFn (chr $ (ord cc)+1)) env
+                                                       let machine' = Machine (code machine) env' (dump machine)
+                                                       S.put machine'
+                                         _ -> return ()
                               _ -> return ()
                         ; return ()
                         }
