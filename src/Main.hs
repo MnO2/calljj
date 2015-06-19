@@ -58,7 +58,6 @@ initialDump = [([], Map.empty), ([App 1 1], Map.empty)]
 
 start :: Prog -> IO ()
 start prog = do
-  print prog
   let machine = Machine (body prog) initialEnv initialDump
   ret <- S.evalStateT eval machine
   return ret
@@ -72,27 +71,27 @@ evalInst (App m n) = do { machine <- S.get
                         ; let v = fromJust $ Map.lookup (top-n+1) env
                         ; case f of
                               Fn fn_code fn_env ->  do
-                                                      let dump' = (((code machine, environment machine)):(dump machine))
-                                                      let fn_env' = Map.insert (top+1) v fn_env
+                                                      let dump' = ((code machine, environment machine):(dump machine))
+                                                      let fn_env' = Map.insert ((Map.size fn_env)+1) v fn_env
                                                       let machine' = Machine fn_code fn_env' dump'
                                                       S.put machine'
                               In -> do
                                      c <- liftIO $ getChar
-                                     let env' = Map.insert (top+1) (CharFn c) env
+                                     let env' = Map.insert ((Map.size env)+1) (CharFn c) env
                                      let machine' = Machine (code machine) env' (dump machine)
                                      S.put machine'
                               Out -> do
                                        case v of
                                          CharFn cc -> do
                                                        liftIO $ putChar cc
-                                                       let env' = Map.insert (top+1) v env
+                                                       let env' = Map.insert ((Map.size env)+1) v env
                                                        let machine' = Machine (code machine) env' (dump machine)
                                                        S.put machine'
                                          _ -> return ()
                               Succ -> do
                                        case v of
                                          CharFn cc -> do
-                                                       let env' = Map.insert (top+1) (CharFn (chr $ (ord cc)+1)) env
+                                                       let env' = Map.insert ((Map.size env)+1) (CharFn (chr $ (ord cc)+1)) env
                                                        let machine' = Machine (code machine) env' (dump machine)
                                                        S.put machine'
                                          _ -> return ()
@@ -102,8 +101,7 @@ evalInst (App m n) = do { machine <- S.get
 evalInst (Abs arity insts) = do { machine <- S.get 
                                 ; let env = environment machine
                                 ; let f = Fn insts env
-                                ; let top = Map.size env
-                                ; let env' = Map.insert (top+1) f env
+                                ; let env' = Map.insert ((Map.size env)+1) f env
                                 ; let machine' = Machine (code machine) env' (dump machine)
                                 ; S.put machine'
                                 }
@@ -114,13 +112,11 @@ eval = do
   machine <- S.get
   let c = code machine
 
-  liftIO $ putStrLn $ show c
-
   if not (null c)
   then do
     let inst = head c
     let rest = tail c
-    liftIO $ putStrLn $ show inst
+    {-liftIO $ putStrLn $ show inst-}
     let machine' = Machine rest (environment machine) (dump machine)
     S.put machine'
 
