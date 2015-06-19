@@ -58,6 +58,7 @@ initialDump = [([], Map.empty), ([App 1 1], Map.empty)]
 
 start :: Prog -> IO ()
 start prog = do
+  print prog
   let machine = Machine (body prog) initialEnv initialDump
   let ret = S.evalStateT eval machine
   return ()
@@ -146,7 +147,7 @@ absParser = do { arity_seq <- aritySeqParser
                }
   where
     aritySeqParser :: Stream s m Char => ParsecT s u m [Char]
-    aritySeqParser = P.many1 (P.char '解')
+    aritySeqParser = P.many1 (P.char '姐')
 
 
 appParser :: Stream s m Char => ParsecT s u m Inst
@@ -158,10 +159,10 @@ appParser = do { idx_of_function_seq <- idxOfFunctionParser
                }
   where 
     idxOfFunctionParser :: Stream s m Char => ParsecT s u m [Char]
-    idxOfFunctionParser = P.many1 (P.char '接')
+    idxOfFunctionParser = P.many1 (P.char '姊')
 
     idxOfArgumentParser :: Stream s m Char => ParsecT s u m [Char]
-    idxOfArgumentParser = P.many1 (P.char '解')
+    idxOfArgumentParser = P.many1 (P.char '姐')
 
 
 instParser :: Stream s m Char => ParsecT s u m Inst
