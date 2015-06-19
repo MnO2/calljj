@@ -116,7 +116,7 @@ eval = do
   then do
     let inst = head c
     let rest = tail c
-    {-liftIO $ putStrLn $ show inst-}
+    liftIO $ putStrLn $ show inst
     let machine' = Machine rest (environment machine) (dump machine)
     S.put machine'
 
