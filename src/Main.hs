@@ -49,7 +49,7 @@ type SECD a = StateT Machine IO a
 
 
 initialEnv :: Environment
-initialEnv = Map.fromList [(1, In), (2, Out), (3, Succ)]
+initialEnv = Map.fromList [(1, In), (2, CharFn '姐'), (3, Succ), (4, Out)]
 
 
 initialDump :: Dump
@@ -60,8 +60,8 @@ start :: Prog -> IO ()
 start prog = do
   print prog
   let machine = Machine (body prog) initialEnv initialDump
-  let ret = S.evalStateT eval machine
-  return ()
+  ret <- S.evalStateT eval machine
+  return ret
 
 
 evalInst :: Inst -> SECD () 
@@ -114,10 +114,13 @@ eval = do
   machine <- S.get
   let c = code machine
 
+  liftIO $ putStrLn $ show c
+
   if not (null c)
   then do
     let inst = head c
     let rest = tail c
+    liftIO $ putStrLn $ show inst
     let machine' = Machine rest (environment machine) (dump machine)
     S.put machine'
 
