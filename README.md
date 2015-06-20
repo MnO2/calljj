@@ -11,3 +11,21 @@ lispy 語言中有一個 function 叫做 callcc，而這個 project 的名字是
 ```
 姐姊姊姐姐姐姐
 ```
+
+
+## Installation
+
+* With stack
+
+``` bash
+git clone https://github.com/MnO2/calljj.git
+stack build .
+```
+
+* With cabal
+
+``` bash
+git clone https://github.com/MnO2/calljj.git
+cabal sandbox init
+cabal install
+```
