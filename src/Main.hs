@@ -152,6 +152,7 @@ absParser = do { arity_seq <- aritySeqParser
 appParser :: Stream s m Char => ParsecT s u m Inst
 appParser = do { idx_of_function_seq <- idxOfFunctionParser
                ; idx_of_argument_seq <- idxOfArgumentParser
+               ; P.spaces
                ; let idx_of_function = length idx_of_function_seq
                ; let idx_of_argument = length idx_of_argument_seq
                ; return $ App idx_of_function idx_of_argument
