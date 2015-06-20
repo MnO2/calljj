@@ -16,7 +16,9 @@ import           Text.Parsec ((<|>), ParsecT, Stream)
 import qualified Text.Parsec.Char                       as P
 
 
-data Inst = Abs Int [Inst]
+type Arity = Int
+
+data Inst = Abs Arity [Inst]
           | App Int Int
           deriving (Eq, Show)
 
@@ -26,7 +28,7 @@ data Prog = Prog
             }
             deriving (Eq, Show)
 
-data Value = Fn Code Environment
+data Value = Fn Arity Code Environment
            | CharFn Char
            | Succ
            | In
@@ -46,6 +48,24 @@ data Machine = Machine
 
 
 type SECD a = StateT Machine IO a
+
+
+printCode :: Code -> IO ()
+printCode c = do
+  putStr "curr code: "
+  print c
+
+
+printEnv :: Environment -> IO ()
+printEnv env = do
+  putStr "curr environment: "
+  print $ Map.toList env
+
+
+printInst :: Inst -> IO ()
+printInst inst = do
+  putStr "inst: "
+  print $ inst
 
 
 initialEnv :: Environment
@@ -70,11 +90,18 @@ evalInst (App m n) = do { machine <- S.get
                         ; let f = fromJust $ Map.lookup (top-m+1) env
                         ; let v = fromJust $ Map.lookup (top-n+1) env
                         ; case f of
-                              Fn fn_code fn_env ->  do
-                                                      let dump' = ((code machine, environment machine):(dump machine))
-                                                      let fn_env' = Map.insert ((Map.size fn_env)+1) v fn_env
-                                                      let machine' = Machine fn_code fn_env' dump'
-                                                      S.put machine'
+                              Fn fn_arity fn_code fn_env ->  do
+                                                                if fn_arity >= 1
+                                                                then do
+                                                                        let dump' = ((code machine, environment machine):(dump machine))
+                                                                        let fn_env' = Map.insert ((Map.size fn_env)+1) v fn_env
+                                                                        let machine' = Machine [Abs fn_arity fn_code] fn_env' dump'
+                                                                        S.put machine'
+                                                                else do
+                                                                        let dump' = ((code machine, environment machine):(dump machine))
+                                                                        let fn_env' = Map.insert ((Map.size fn_env)+1) v fn_env
+                                                                        let machine' = Machine fn_code fn_env' dump'
+                                                                        S.put machine'
                               In -> do
                                      c <- liftIO $ getChar
                                      let env' = Map.insert ((Map.size env)+1) (CharFn c) env
@@ -100,7 +127,7 @@ evalInst (App m n) = do { machine <- S.get
                         }
 evalInst (Abs arity insts) = do { machine <- S.get 
                                 ; let env = environment machine
-                                ; let f = Fn insts env
+                                ; let f = Fn (arity-1) insts env
                                 ; let env' = Map.insert ((Map.size env)+1) f env
                                 ; let machine' = Machine (code machine) env' (dump machine)
                                 ; S.put machine'
@@ -116,11 +143,16 @@ eval = do
   then do
     let inst = head c
     let rest = tail c
-    liftIO $ putStrLn $ show inst
+    liftIO $ printInst inst
     let machine' = Machine rest (environment machine) (dump machine)
     S.put machine'
 
+    liftIO $ printCode $ code machine
+    liftIO $ printEnv $ environment machine
     evalInst inst
+    m <- S.get
+    liftIO $ printCode $ code m
+    liftIO $ printEnv $ environment m 
     eval
   else do
     if (null (dump machine))
@@ -141,7 +173,7 @@ eval = do
 absParser :: Stream s m Char => ParsecT s u m Inst
 absParser = do { arity_seq <- aritySeqParser
                ; let arity = length arity_seq
-               ; insts <- P.count arity appParser
+               ; insts <- P.many1 appParser
                ; return $ Abs arity insts
                }
   where
