@@ -4,6 +4,8 @@ An esoteric language running with SECD machine. The name was based on a pun of a
 
 Unlike other esoteric language, Grass language is based on lambda calculus, therefore it would be helpful for beginners to learn lambda calculus. On the other hand, knowing [SECD Machine](https://en.wikipedia.org/wiki/SECD_machine) would be helpful on how to use the most basic structures to implement a functional language.
 
+The rationale behind of this project was to leverage some pun to make my Taiwanese friends would like to learn more about functional language.
+
 ## Examples
 
 * Print 「姐」
